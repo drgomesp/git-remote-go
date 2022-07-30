@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 
@@ -25,11 +26,16 @@ func init() {
 }
 
 func main() {
+	remoteName := os.Args[2]
+	if strings.HasPrefix(remoteName, "pfg://") {
+		remoteName = remoteName[len("pfg://"):]
+	}
+
 	if os.Getenv("GIT_DIR") == "" {
 		log.Fatal().Msg("missing repository path ($GIT_DIR)")
 	}
 
-	handler, err := gitremote.NewIpfsProtocol()
+	handler, err := gitremote.NewIpfsProtocol(remoteName)
 	if err != nil {
 		log.Err(err).Send()
 	}

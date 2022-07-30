@@ -78,6 +78,7 @@ loop:
 		switch {
 		case command == "capabilities":
 			io.WriteString(w, strings.Join(p.handler.Capabilities(), "\n"))
+			io.WriteString(w, "\n")
 		case strings.HasPrefix(command, CmdList):
 			list, err := p.handler.List(strings.HasPrefix(command, "list for-push"))
 			if err != nil {

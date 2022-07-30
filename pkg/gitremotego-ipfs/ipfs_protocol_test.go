@@ -22,7 +22,7 @@ func init() {
 		return
 	}
 
-	_ = os.Setenv("GIT_DIR", path.Join(getwd, "..", ".."))
+	_ = os.Setenv("GIT_DIR", path.Join(getwd, "git"))
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
@@ -46,19 +46,29 @@ func Test_IpfsProtocol(t *testing.T) {
 		},
 		{
 			name: "push",
-			in:   "push refs/heads/main:refs/heads/main\n",
-			out:  []string{"ok hash=26788196417edb6cc5d87d24a7c3be93ea79cf19 cid=baf4bcfbgpcazmql63nwmlwd5est4hput5j446gi"},
+			in:   "push refs/heads/master:refs/heads/master\n",
+			out:  []string{"ok hash=1ca13f889768a926e85ff50f61be46de092553fc cid=baf4bcfa4ue7yrf3ivetoqx7vb5q34rw6besvh7a"},
 		},
 		{
 			name: "push fail",
 			in:   "push foo:bar\n",
 			out:  []string{"push: reference not found"},
 		},
+		{
+			name: "list",
+			in:   "list\n",
+			out: []string{
+				"@ref: refs/heads/master",
+				" HEAD",
+				"@1ca13f889768a926e85ff50f61be46de092553fc",
+				" refs/heads/master",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, err := gitremotegoipfs.NewIpfsProtocol()
+			h, err := gitremotegoipfs.NewIpfsProtocol("QmegVtYHpVGJTS1s9ZqcMiqu9DEfbVGTUp9PNvTGREfwb7")
 			assert.NoError(t, err)
 			assert.NotNil(t, h)
 
