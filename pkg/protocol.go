@@ -53,6 +53,7 @@ loop:
 		case strings.HasPrefix(command, "list"):
 			list, err := p.handler.List(strings.HasPrefix(command, "list for-push"))
 			if err != nil {
+				_, _ = io.WriteString(w, fmt.Sprintf("error: %s\n", err))
 				return err
 			}
 			for _, e := range list {

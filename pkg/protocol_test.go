@@ -65,6 +65,7 @@ func Test_Protocol(t *testing.T) {
 			name: "list error",
 			in:   CmdList,
 			err:  errors.New("fail"),
+			out:  []string{"error: fail"},
 			mock: func(m *handlerMock) {
 				m.
 					On("List", false).
