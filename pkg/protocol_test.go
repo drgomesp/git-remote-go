@@ -19,8 +19,14 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
+var _ ProtocolHandler = &handlerMock{}
+
 type handlerMock struct {
 	mock.Mock
+}
+
+func (h *handlerMock) Initialize() error {
+	return nil
 }
 
 func (h *handlerMock) Capabilities() []string {
@@ -30,6 +36,16 @@ func (h *handlerMock) Capabilities() []string {
 func (h *handlerMock) List(forPush bool) ([]string, error) {
 	args := h.Called(forPush)
 	return args.Get(0).([]string), args.Error(1)
+}
+
+func (h *handlerMock) Push(localRef string, remoteRef string) (string, error) {
+	args := h.Called(localRef, remoteRef)
+	return args.String(0), args.Error(1)
+}
+
+func (h *handlerMock) Fetch(sha, ref string) error {
+	args := h.Called(sha, ref)
+	return args.Error(0)
 }
 
 func Test_Protocol(t *testing.T) {
@@ -70,6 +86,15 @@ func Test_Protocol(t *testing.T) {
 				m.
 					On("List", false).
 					Return([]string{}, errors.New("fail"))
+			},
+		},
+		{
+			name: "push",
+			in:   "push a:b",
+			out:  []string{"ok"},
+			mock: func(m *handlerMock) {
+				m.On("Push", "a", "b").
+					Return([]string{"ok push"}, nil)
 			},
 		},
 	}
