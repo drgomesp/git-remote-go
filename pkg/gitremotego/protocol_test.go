@@ -1,4 +1,4 @@
-package gitremote
+package gitremotego
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,12 @@ import (
 )
 
 func init() {
+	getwd, err := os.Getwd()
+	if err != nil {
+		return
+	}
+
+	_ = os.Setenv("GIT_DIR", getwd)
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
@@ -25,7 +32,7 @@ type handlerMock struct {
 	mock.Mock
 }
 
-func (h *handlerMock) Initialize() error {
+func (h *handlerMock) Initialize(repo *git.Repository) error {
 	return nil
 }
 
@@ -94,7 +101,7 @@ func Test_Protocol(t *testing.T) {
 			out:  []string{"ok"},
 			mock: func(m *handlerMock) {
 				m.On("Push", "a", "b").
-					Return([]string{"ok push"}, nil)
+					Return([]string{"ok hash=26788196417edb6cc5d87d24a7c3be93ea79cf19 cid=baf4bcfbgpcazmql63nwmlwd5est4hput5j446gi"}, nil)
 			},
 		},
 	}

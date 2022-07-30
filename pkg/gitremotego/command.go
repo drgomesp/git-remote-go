@@ -1,4 +1,4 @@
-package gitremote
+package gitremotego
 
 const (
 	CmdList  = "list"

@@ -1,12 +1,14 @@
-package gitremote
+package gitremotego
 
 import (
 	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -17,7 +19,7 @@ func init() {
 }
 
 type ProtocolHandler interface {
-	Initialize() error
+	Initialize(repo *git.Repository) error
 	Capabilities() []string
 	List(forPush bool) ([]string, error)
 	Push(localRef string, remoteRef string) (string, error)
@@ -28,17 +30,36 @@ type Protocol struct {
 	prefix string
 
 	handler  ProtocolHandler
+	repo     *git.Repository
 	lazyWork []func() (string, error)
 }
 
 func NewProtocol(prefix string, handler ProtocolHandler) (*Protocol, error) {
-	if err := handler.Initialize(); err != nil {
+	log.Info().Msgf("GIT_DIR=%s", os.Getenv("GIT_DIR"))
+
+	localDir, err := GetLocalDir()
+	if err != nil {
+		return nil, err
+	}
+
+	repo, err := git.PlainOpen(localDir)
+	if err == git.ErrWorktreeNotProvided {
+		repoRoot, _ := path.Split(localDir)
+
+		repo, err = git.PlainOpen(repoRoot)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err = handler.Initialize(repo); err != nil {
 		return nil, err
 	}
 
 	return &Protocol{
 		prefix:  prefix,
 		handler: handler,
+		repo:    repo,
 	}, nil
 }
 
@@ -66,7 +87,7 @@ loop:
 			for _, e := range list {
 				_, _ = io.WriteString(w, fmt.Sprintf("%s\n", e))
 			}
-			log.Printf("\n")
+			_, _ = io.WriteString(w, "\n")
 		case strings.HasPrefix(command, "push "):
 			refs := strings.Split(command[5:], ":")
 			p.push(refs[0], refs[1], false) //TODO: parse force
@@ -81,6 +102,7 @@ loop:
 			for _, task := range p.lazyWork {
 				resp, err := task()
 				if err != nil {
+					io.WriteString(w, err.Error())
 					return err
 				}
 
@@ -101,7 +123,6 @@ func (p *Protocol) push(src string, dst string, force bool) (string, error) {
 	p.lazyWork = append(p.lazyWork, func() (string, error) {
 		done, err := p.handler.Push(src, dst)
 		if err != nil {
-			log.Err(err).Msg("push failed")
 			return "", err
 		}
 
