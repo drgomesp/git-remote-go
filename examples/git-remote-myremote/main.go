@@ -12,7 +12,7 @@ type MyHandler struct {
 }
 
 func (m MyHandler) Capabilities() []string {
-	panic("implement me")
+	return gitremote.DefaultCapabilities
 }
 
 func (m MyHandler) List(forPush bool) ([]string, error) {

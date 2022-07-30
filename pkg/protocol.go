@@ -49,9 +49,7 @@ loop:
 		log.Info().Msgf("< %s", command)
 		switch {
 		case command == "capabilities":
-			_, _ = io.WriteString(w, fmt.Sprintf("list\n"))
-			_, _ = io.WriteString(w, fmt.Sprintf("push\n"))
-			_, _ = io.WriteString(w, fmt.Sprintf("fetch\n"))
+			io.WriteString(w, strings.Join(p.handler.Capabilities(), "\n"))
 		case strings.HasPrefix(command, "list"):
 			list, err := p.handler.List(strings.HasPrefix(command, "list for-push"))
 			if err != nil {
