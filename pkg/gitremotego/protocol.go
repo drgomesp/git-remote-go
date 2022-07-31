@@ -96,10 +96,7 @@ loop:
 			p.Printf(w, "\n")
 		case strings.HasPrefix(command, "push "):
 			refs := strings.Split(command[5:], ":")
-			if _, err = p.push(refs[0], refs[1], false); err != nil {
-				log.Err(err).Send()
-				return err
-			}
+			p.push(refs[0], refs[1], false)
 		case strings.HasPrefix(command, "fetch "):
 			parts := strings.Split(command, " ")
 			p.fetch(parts[1], parts[2])
@@ -110,7 +107,6 @@ loop:
 			for _, task := range p.lazyWork {
 				resp, err := task()
 				if err != nil {
-					log.Err(err).Send()
 					return err
 				}
 				p.Printf(w, "%s", resp)
@@ -126,7 +122,7 @@ loop:
 	return p.handler.Finish()
 }
 
-func (p *Protocol) push(src string, dst string, force bool) (string, error) {
+func (p *Protocol) push(src string, dst string, force bool) {
 	p.lazyWork = append(p.lazyWork, func() (string, error) {
 		done, err := p.handler.Push(src, dst)
 		if err != nil {
@@ -135,11 +131,9 @@ func (p *Protocol) push(src string, dst string, force bool) (string, error) {
 
 		return fmt.Sprintf("ok %s\n", done), nil
 	})
-
-	return "", nil
 }
 
-func (p *Protocol) fetch(sha string, ref string) error {
+func (p *Protocol) fetch(sha string, ref string) {
 	p.lazyWork = append(p.lazyWork, func() (string, error) {
 		fetch := core.NewFetch(p.localDir, p.tracker, p.handler.ProvideBlock)
 
@@ -157,8 +151,6 @@ func (p *Protocol) fetch(sha string, ref string) error {
 
 		return "", nil
 	})
-
-	return nil
 }
 
 func (p *Protocol) Printf(w io.Writer, format string, a ...interface{}) (n int, err error) {

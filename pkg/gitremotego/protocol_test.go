@@ -13,6 +13,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/ipfs-shipyard/git-remote-ipld/core"
 )
 
 func init() {
@@ -32,6 +34,11 @@ type handlerMock struct {
 	mock.Mock
 }
 
+func (h *handlerMock) Initialize(tracker *core.Tracker, repo *git.Repository) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (h *handlerMock) ProvideBlock(identifier string) ([]byte, error) {
 	//TODO implement me
 	panic("implement me")
@@ -42,11 +49,7 @@ func (h *handlerMock) Finish() error {
 	panic("implement me")
 }
 
-func (h *handlerMock) Initialize(repo *git.Repository) error {
-	return nil
-}
-
-func (h *handlerMock) Capabilities() []string {
+func (h *handlerMock) Capabilities() string {
 	return DefaultCapabilities
 }
 

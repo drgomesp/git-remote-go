@@ -197,7 +197,7 @@ func (p *IpfsProtocol) Initialize(tracker *core.Tracker, repo *git.Repository) e
 	return nil
 }
 
-func (p *IpfsProtocol) Capabilities() []string {
+func (p *IpfsProtocol) Capabilities() string {
 	return gitremotego.DefaultCapabilities
 }
 
@@ -232,7 +232,6 @@ func (p *IpfsProtocol) List(forPush bool) ([]string, error) {
 					return nil, err
 				}
 
-				dest = strings.Replace(dest, "ref: ", "@", 1)
 				out = append(out, fmt.Sprintf("%s %s", dest, r))
 			}
 		}
@@ -297,7 +296,7 @@ func (p *IpfsProtocol) Push(local string, remote string) (string, error) {
 
 	err = push.PushHash(headHash)
 	if err != nil {
-		return "", fmt.Errorf("command push: %v", err)
+		return "", fmt.Errorf("push: %v", err)
 	}
 
 	hash := localRef.Hash()
@@ -318,8 +317,9 @@ func (p *IpfsProtocol) Push(local string, remote string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("push: %v", err)
 	}
+
 	if head == "" {
-		headRef, err := p.ipfs.Add(strings.NewReader("refs/heads/master")) //TODO: Make this smarter?
+		headRef, err := p.ipfs.Add(strings.NewReader("refs/heads/master"))
 		if err != nil {
 			return "", fmt.Errorf("push: %v", err)
 		}
@@ -337,6 +337,7 @@ func (p *IpfsProtocol) Push(local string, remote string) (string, error) {
 // the resulting object
 func (p *IpfsProtocol) bigNodePatcher(tracker *core.Tracker) func(cid.Cid, []byte) error {
 	return func(hash cid.Cid, data []byte) error {
+		log.Info().Msgf("bigNodePatcher")
 		if len(data) > (1 << 21) {
 			c, err := p.ipfs.Add(bytes.NewReader(data))
 			if err != nil {

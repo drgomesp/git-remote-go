@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +18,6 @@ import (
 )
 
 func init() {
-	getwd, err := os.Getwd()
-	if err != nil {
-		return
-	}
-
-	_ = os.Setenv("IPFS_PATH", "localhost:5001")
-	_ = os.Setenv("GIT_DIR", path.Join(getwd, "testrepo"))
-
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
@@ -33,13 +26,13 @@ func Test_IpfsProtocol(t *testing.T) {
 	tests := []struct {
 		name string
 		in   string
-		out  []string
+		out  string
 		err  error
 	}{
 		{
 			name: "empty",
 			in:   "",
-			out:  nil,
+			out:  ``,
 		},
 		{
 			name: "capabilities",
@@ -48,41 +41,38 @@ func Test_IpfsProtocol(t *testing.T) {
 		},
 		{
 			name: "push",
-			in:   "push refs/heads/main:refs/heads/main\n",
-			out:  []string{"ok refs/heads/main"},
+			in:   "push refs/heads/master:refs/heads/master\n",
+			out:  `ok refs/heads/master`,
 		},
 		{
 			name: "push fail",
 			in:   "push a:b\n",
-			out:  []string{""},
+			out:  ``,
 		},
 		{
 			name: "list",
 			in:   "list\n",
-			out: []string{
-				"@refs/heads/master HEAD",
-				"38f6d4ddae0b47b525b73aa9deaf36798fb30b7b refs/heads/master",
-			},
+			out: `ref: refs/heads/master HEAD
+855496c865e07d73afd74a4de668658380ad6658 refs/heads/master`,
 		},
 		{
 			name: "fetch",
-			in:   "fetch 38f6d4ddae0b47b525b73aa9deaf36798fb30b7b refs/heads/main\n",
-			out: []string{
-				"",
-			},
+			in:   "fetch f1932aa47ba178af518b36570dcc47c93575efb4 refs/heads/master\n",
+			out:  ``,
 		},
 	}
 
+	h, err := gitremotegoipfs.NewIpfsProtocol("QmUwjruL3Jy8vde2JiCAhvgh7TS8VgbTqApjooSqzm4bNm")
+	proto, err := gitremotego.NewProtocol("gitremotego", h)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, err := gitremotegoipfs.NewIpfsProtocol("QmdzGTxxsakEkUzzhfafg8XvbXBgtZmDmrXLDeqUKXiUuD")
+			wdir, _ := os.Getwd()
+			assert.NoError(t, os.RemoveAll(path.Join(wdir, "testrepo", "ipld")))
+
 			assert.NoError(t, err)
 			assert.NotNil(t, h)
 
-			proto, err := gitremotego.NewProtocol(
-				"gitremotego",
-				h,
-			)
 			assert.NoError(t, err)
 
 			reader := strings.NewReader(tt.in + "\n")
@@ -93,13 +83,9 @@ func Test_IpfsProtocol(t *testing.T) {
 				}
 			}
 
-			want := strings.Join(tt.out, "\n")
 			got := strings.TrimSpace(writer.String())
 
-			assert.Equal(t, want, got)
-			wdir, err := os.Getwd()
-
-			assert.NoError(t, os.RemoveAll(path.Join(wdir, "testrepo", "ipld")))
+			assert.Equal(t, tt.out, got)
 		})
 	}
 }

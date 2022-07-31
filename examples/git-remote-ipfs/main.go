@@ -11,6 +11,8 @@ import (
 	gitremote "github.com/drgomesp/git-remote-go/pkg/gitremotego-ipfs"
 )
 
+const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
+
 func init() {
 	wdir, err := os.Getwd()
 	if err != nil {
@@ -29,6 +31,10 @@ func main() {
 	remoteName := os.Args[2]
 	if strings.HasPrefix(remoteName, "pfg://") {
 		remoteName = remoteName[len("pfg://"):]
+	}
+
+	if remoteName == "" {
+		remoteName = EmptyRepo
 	}
 
 	if os.Getenv("GIT_DIR") == "" {

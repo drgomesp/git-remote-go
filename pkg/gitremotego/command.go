@@ -1,9 +1,11 @@
 package gitremotego
 
+import "strings"
+
 const (
 	CmdList  = "list"
 	CmdPush  = "push"
 	CmdFetch = "fetch"
 )
 
-var DefaultCapabilities = []string{CmdPush, CmdFetch}
+var DefaultCapabilities = strings.Join([]string{CmdPush, CmdFetch}, "\n")

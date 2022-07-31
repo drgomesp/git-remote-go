@@ -9,9 +9,11 @@ require (
 	github.com/ipfs-shipyard/git-remote-ipld v0.0.0-20220621091744-304abe54d48e
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-ipfs-api v0.3.0
+	github.com/joho/godotenv v1.4.0
 	github.com/multiformats/go-multihash v0.0.14
 	github.com/rs/zerolog v1.27.0
 	github.com/stretchr/testify v1.8.0
+	gopkg.in/src-d/go-git.v4 v4.11.0
 )
 
 require (
@@ -69,7 +71,6 @@ require (
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897 // indirect
 	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	gopkg.in/src-d/go-billy.v4 v4.2.1 // indirect
-	gopkg.in/src-d/go-git.v4 v4.11.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

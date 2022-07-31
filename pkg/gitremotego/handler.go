@@ -8,7 +8,7 @@ import (
 
 type ProtocolHandler interface {
 	Initialize(tracker *core.Tracker, repo *git.Repository) error
-	Capabilities() []string
+	Capabilities() string
 	List(forPush bool) ([]string, error)
 	Push(localRef string, remoteRef string) (string, error)
 	ProvideBlock(identifier string, tracker *core.Tracker) ([]byte, error)
