@@ -67,7 +67,7 @@ func NewProtocol(prefix string, handler ProtocolHandler) (*Protocol, error) {
 	}, nil
 }
 
-func (p *Protocol) Run(r io.Reader, w io.Writer) error {
+func (p *Protocol) Run(r io.Reader, w io.Writer) (err error) {
 	reader := bufio.NewReader(r)
 loop:
 	for {
@@ -78,7 +78,7 @@ loop:
 
 		command = strings.Trim(command, "\n")
 
-		log.Info().Msgf("< %s", command)
+		log.Info().Msgf("💻 %s", command)
 		switch {
 		case command == "capabilities":
 			p.Printf(w, "push\n")
@@ -87,6 +87,7 @@ loop:
 		case strings.HasPrefix(command, "list"):
 			list, err := p.handler.List(strings.HasPrefix(command, "list for-push"))
 			if err != nil {
+				log.Err(err).Send()
 				return err
 			}
 			for _, e := range list {
@@ -95,7 +96,10 @@ loop:
 			p.Printf(w, "\n")
 		case strings.HasPrefix(command, "push "):
 			refs := strings.Split(command[5:], ":")
-			p.push(refs[0], refs[1], false) //TODO: parse force
+			if _, err = p.push(refs[0], refs[1], false); err != nil {
+				log.Err(err).Send()
+				return err
+			}
 		case strings.HasPrefix(command, "fetch "):
 			parts := strings.Split(command, " ")
 			p.fetch(parts[1], parts[2])
@@ -106,6 +110,7 @@ loop:
 			for _, task := range p.lazyWork {
 				resp, err := task()
 				if err != nil {
+					log.Err(err).Send()
 					return err
 				}
 				p.Printf(w, "%s", resp)

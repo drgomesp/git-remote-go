@@ -48,13 +48,13 @@ func Test_IpfsProtocol(t *testing.T) {
 		},
 		{
 			name: "push",
-			in:   "push refs/heads/master:refs/heads/master\n",
-			out:  []string{"ok refs/heads/master"},
+			in:   "push refs/heads/main:refs/heads/main\n",
+			out:  []string{"ok refs/heads/main"},
 		},
 		{
 			name: "push fail",
-			in:   "push foo:bar\n",
-			out:  []string{"push: reference not found"},
+			in:   "push a:b\n",
+			out:  []string{""},
 		},
 		{
 			name: "list",
@@ -66,7 +66,7 @@ func Test_IpfsProtocol(t *testing.T) {
 		},
 		{
 			name: "fetch",
-			in:   "fetch 38f6d4ddae0b47b525b73aa9deaf36798fb30b7b refs/heads/master\n",
+			in:   "fetch 38f6d4ddae0b47b525b73aa9deaf36798fb30b7b refs/heads/main\n",
 			out: []string{
 				"",
 			},
@@ -75,7 +75,7 @@ func Test_IpfsProtocol(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, err := gitremotegoipfs.NewIpfsProtocol("QmWAz2sPeQy7nQNtMVo3NMZGDTsvX1cPVyTTPj3rB2VoVe")
+			h, err := gitremotegoipfs.NewIpfsProtocol("QmdzGTxxsakEkUzzhfafg8XvbXBgtZmDmrXLDeqUKXiUuD")
 			assert.NoError(t, err)
 			assert.NotNil(t, h)
 
