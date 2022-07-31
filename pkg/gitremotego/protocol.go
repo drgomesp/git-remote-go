@@ -2,6 +2,7 @@ package gitremotego
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/ipfs-shipyard/git-remote-ipld/core"
 )
 
 func init() {
@@ -18,17 +21,11 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
-type ProtocolHandler interface {
-	Initialize(repo *git.Repository) error
-	Capabilities() []string
-	List(forPush bool) ([]string, error)
-	Push(localRef string, remoteRef string) (string, error)
-	Fetch(sha, ref string) error
-}
-
 type Protocol struct {
-	prefix string
+	prefix   string
+	localDir string
 
+	tracker  *core.Tracker
 	handler  ProtocolHandler
 	repo     *git.Repository
 	lazyWork []func() (string, error)
@@ -52,14 +49,21 @@ func NewProtocol(prefix string, handler ProtocolHandler) (*Protocol, error) {
 		}
 	}
 
-	if err = handler.Initialize(repo); err != nil {
+	tracker, err := core.NewTracker(localDir)
+	if err != nil {
+		return nil, fmt.Errorf("fetch: %v", err)
+	}
+
+	if err = handler.Initialize(tracker, repo); err != nil {
 		return nil, err
 	}
 
 	return &Protocol{
-		prefix:  prefix,
-		handler: handler,
-		repo:    repo,
+		prefix:   prefix,
+		handler:  handler,
+		repo:     repo,
+		localDir: localDir,
+		tracker:  tracker,
 	}, nil
 }
 
@@ -77,18 +81,18 @@ loop:
 		log.Info().Msgf("< %s", command)
 		switch {
 		case command == "capabilities":
-			io.WriteString(w, strings.Join(p.handler.Capabilities(), "\n"))
-			io.WriteString(w, "\n")
-		case strings.HasPrefix(command, CmdList):
+			p.Printf(w, "push\n")
+			p.Printf(w, "fetch\n")
+			p.Printf(w, "\n")
+		case strings.HasPrefix(command, "list"):
 			list, err := p.handler.List(strings.HasPrefix(command, "list for-push"))
 			if err != nil {
-				_, _ = io.WriteString(w, fmt.Sprintf("error: %s\n", err))
 				return err
 			}
 			for _, e := range list {
-				_, _ = io.WriteString(w, fmt.Sprintf("%s\n", e))
+				p.Printf(w, "%s\n", e)
 			}
-			_, _ = io.WriteString(w, "\n")
+			p.Printf(w, "\n")
 		case strings.HasPrefix(command, "push "):
 			refs := strings.Split(command[5:], ":")
 			p.push(refs[0], refs[1], false) //TODO: parse force
@@ -98,18 +102,15 @@ loop:
 		case command == "":
 			fallthrough
 		case command == "\n":
-			log.Info().Msg("doing work...")
-
+			log.Info().Msg("Processing tasks")
 			for _, task := range p.lazyWork {
 				resp, err := task()
 				if err != nil {
-					io.WriteString(w, err.Error())
 					return err
 				}
-
-				io.WriteString(w, fmt.Sprintf("%s", resp))
+				p.Printf(w, "%s", resp)
 			}
-
+			p.Printf(w, "\n")
 			p.lazyWork = nil
 			break loop
 		default:
@@ -117,7 +118,7 @@ loop:
 		}
 	}
 
-	return nil
+	return p.handler.Finish()
 }
 
 func (p *Protocol) push(src string, dst string, force bool) (string, error) {
@@ -133,6 +134,29 @@ func (p *Protocol) push(src string, dst string, force bool) (string, error) {
 	return "", nil
 }
 
-func (p *Protocol) fetch(s string, s2 string) error {
+func (p *Protocol) fetch(sha string, ref string) error {
+	p.lazyWork = append(p.lazyWork, func() (string, error) {
+		fetch := core.NewFetch(p.localDir, p.tracker, p.handler.ProvideBlock)
+
+		if err := fetch.FetchHash(sha); err != nil {
+			return "", fmt.Errorf("fetch: %v", err)
+		}
+
+		sha, err := hex.DecodeString(sha)
+		if err != nil {
+			return "", fmt.Errorf("fetch: %v", err)
+		}
+
+		log.Info().Msgf("fetch(sha=%s)", sha)
+		p.tracker.Set(ref, sha)
+
+		return "", nil
+	})
+
 	return nil
+}
+
+func (p *Protocol) Printf(w io.Writer, format string, a ...interface{}) (n int, err error) {
+
+	return fmt.Fprintf(w, format, a...)
 }

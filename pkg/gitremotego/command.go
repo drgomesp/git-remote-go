@@ -6,4 +6,4 @@ const (
 	CmdFetch = "fetch"
 )
 
-var DefaultCapabilities = []string{CmdList, CmdPush, CmdFetch}
+var DefaultCapabilities = []string{CmdPush, CmdFetch}

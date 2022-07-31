@@ -32,6 +32,16 @@ type handlerMock struct {
 	mock.Mock
 }
 
+func (h *handlerMock) ProvideBlock(identifier string) ([]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h *handlerMock) Finish() error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (h *handlerMock) Initialize(repo *git.Repository) error {
 	return nil
 }

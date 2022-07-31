@@ -22,7 +22,9 @@ func init() {
 		return
 	}
 
-	_ = os.Setenv("GIT_DIR", path.Join(getwd, "git"))
+	_ = os.Setenv("IPFS_PATH", "localhost:5001")
+	_ = os.Setenv("GIT_DIR", path.Join(getwd, "testrepo"))
+
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
@@ -47,7 +49,7 @@ func Test_IpfsProtocol(t *testing.T) {
 		{
 			name: "push",
 			in:   "push refs/heads/master:refs/heads/master\n",
-			out:  []string{"ok hash=1ca13f889768a926e85ff50f61be46de092553fc cid=baf4bcfa4ue7yrf3ivetoqx7vb5q34rw6besvh7a"},
+			out:  []string{"ok refs/heads/master"},
 		},
 		{
 			name: "push fail",
@@ -58,17 +60,22 @@ func Test_IpfsProtocol(t *testing.T) {
 			name: "list",
 			in:   "list\n",
 			out: []string{
-				"@ref: refs/heads/master",
-				" HEAD",
-				"@1ca13f889768a926e85ff50f61be46de092553fc",
-				" refs/heads/master",
+				"@refs/heads/master HEAD",
+				"38f6d4ddae0b47b525b73aa9deaf36798fb30b7b refs/heads/master",
+			},
+		},
+		{
+			name: "fetch",
+			in:   "fetch 38f6d4ddae0b47b525b73aa9deaf36798fb30b7b refs/heads/master\n",
+			out: []string{
+				"",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h, err := gitremotegoipfs.NewIpfsProtocol("QmegVtYHpVGJTS1s9ZqcMiqu9DEfbVGTUp9PNvTGREfwb7")
+			h, err := gitremotegoipfs.NewIpfsProtocol("QmWAz2sPeQy7nQNtMVo3NMZGDTsvX1cPVyTTPj3rB2VoVe")
 			assert.NoError(t, err)
 			assert.NotNil(t, h)
 
@@ -77,7 +84,6 @@ func Test_IpfsProtocol(t *testing.T) {
 				h,
 			)
 			assert.NoError(t, err)
-			assert.NotNil(t, proto)
 
 			reader := strings.NewReader(tt.in + "\n")
 			var writer bytes.Buffer
@@ -91,6 +97,9 @@ func Test_IpfsProtocol(t *testing.T) {
 			got := strings.TrimSpace(writer.String())
 
 			assert.Equal(t, want, got)
+			wdir, err := os.Getwd()
+
+			assert.NoError(t, os.RemoveAll(path.Join(wdir, "testrepo", "ipld")))
 		})
 	}
 }
