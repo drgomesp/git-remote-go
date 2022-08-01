@@ -52,17 +52,19 @@ func Test_IpfsProtocol(t *testing.T) {
 		{
 			name: "list",
 			in:   "list\n",
-			out: `ref: refs/heads/master HEAD
-855496c865e07d73afd74a4de668658380ad6658 refs/heads/master`,
+			out: `refs/heads/master HEAD
+07664555265e00a69b8bf2453b949546f4b7c011 refs/heads/master`,
 		},
 		{
 			name: "fetch",
-			in:   "fetch f1932aa47ba178af518b36570dcc47c93575efb4 refs/heads/master\n",
-			out:  ``,
+			in: `fetch 0000000000000000000000000000000000000000 refs/heads/master
+fetch 07664555265e00a69b8bf2453b949546f4b7c011 refs/heads/master
+`,
+			out: ``,
 		},
 	}
 
-	h, err := gitremotegoipfs.NewIpfsProtocol("QmUwjruL3Jy8vde2JiCAhvgh7TS8VgbTqApjooSqzm4bNm")
+	h, err := gitremotegoipfs.NewIpfsProtocol("QmeEdDstkffqmuJ3qxZDqeeEiVg9U7ttMU8q8esCePtWYz")
 	proto, err := gitremotego.NewProtocol("gitremotego", h)
 
 	for _, tt := range tests {

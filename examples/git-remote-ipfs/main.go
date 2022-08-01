@@ -2,9 +2,9 @@ package main
 
 import (
 	"os"
-	"path"
 	"strings"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog/log"
 
 	"github.com/drgomesp/git-remote-go/pkg/gitremotego"
@@ -12,20 +12,6 @@ import (
 )
 
 const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
-
-func init() {
-	wdir, err := os.Getwd()
-	if err != nil {
-		log.Err(err).Send()
-	}
-
-	if err = os.Setenv(
-		"GIT_DIR",
-		path.Join(wdir),
-	); err != nil {
-		log.Err(err).Send()
-	}
-}
 
 func main() {
 	remoteName := os.Args[2]

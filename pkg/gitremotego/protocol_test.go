@@ -2,7 +2,6 @@ package gitremotego
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"os"
 	"strings"
@@ -34,12 +33,12 @@ type handlerMock struct {
 	mock.Mock
 }
 
-func (h *handlerMock) Initialize(tracker *core.Tracker, repo *git.Repository) error {
+func (h *handlerMock) ProvideBlock(identifier string, tracker *core.Tracker) ([]byte, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (h *handlerMock) ProvideBlock(identifier string) ([]byte, error) {
+func (h *handlerMock) Initialize(tracker *core.Tracker, repo *git.Repository) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -72,50 +71,18 @@ func Test_Protocol(t *testing.T) {
 	tests := []struct {
 		name string
 		in   string
-		out  []string
+		out  string
 		err  error
 		mock func(m *handlerMock)
 	}{
 		{
 			name: "empty",
 			in:   "",
-			out:  nil,
 		},
 		{
 			name: "capabilities",
 			in:   "capabilities",
 			out:  DefaultCapabilities,
-		},
-		{
-			name: "list",
-			in:   CmdList,
-			out: []string{
-				"@refs/heads/master HEAD",
-			},
-			mock: func(m *handlerMock) {
-				m.On("List", false).
-					Return([]string{"@refs/heads/master HEAD"}, nil)
-			},
-		},
-		{
-			name: "list error",
-			in:   CmdList,
-			err:  errors.New("fail"),
-			out:  []string{"error: fail"},
-			mock: func(m *handlerMock) {
-				m.
-					On("List", false).
-					Return([]string{}, errors.New("fail"))
-			},
-		},
-		{
-			name: "push",
-			in:   "push a:b",
-			out:  []string{"ok"},
-			mock: func(m *handlerMock) {
-				m.On("Push", "a", "b").
-					Return([]string{"ok hash=26788196417edb6cc5d87d24a7c3be93ea79cf19 cid=baf4bcfbgpcazmql63nwmlwd5est4hput5j446gi"}, nil)
-			},
 		},
 	}
 
@@ -141,10 +108,9 @@ func Test_Protocol(t *testing.T) {
 
 			handlerMock.AssertExpectations(t)
 
-			want := strings.Join(tt.out, "\n")
 			got := strings.TrimSpace(writer.String())
 
-			assert.Equal(t, want, got)
+			assert.Equal(t, tt.out, got)
 		})
 	}
 }

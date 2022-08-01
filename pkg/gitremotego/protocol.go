@@ -137,6 +137,10 @@ func (p *Protocol) fetch(sha string, ref string) {
 	p.lazyWork = append(p.lazyWork, func() (string, error) {
 		fetch := core.NewFetch(p.localDir, p.tracker, p.handler.ProvideBlock)
 
+		if sha == "0000000000000000000000000000000000000000" {
+			return "", nil
+		}
+
 		if err := fetch.FetchHash(sha); err != nil {
 			return "", fmt.Errorf("fetch: %v", err)
 		}
@@ -146,7 +150,6 @@ func (p *Protocol) fetch(sha string, ref string) {
 			return "", fmt.Errorf("fetch: %v", err)
 		}
 
-		log.Info().Msgf("fetch(sha=%s)", sha)
 		p.tracker.Set(ref, sha)
 
 		return "", nil

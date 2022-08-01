@@ -2,7 +2,7 @@ module github.com/drgomesp/git-remote-go
 
 go 1.18
 
-replace github.com/ipfs-shipyard/git-remote-ipld => /home/drgomesp/go/src/github.com/ipfs-shipyard/git-remote-ipld
+replace github.com/ipfs-shipyard/git-remote-ipld => /Users/drgomesp/go/src/github.com/drgomesp/git-remote-ipld
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2

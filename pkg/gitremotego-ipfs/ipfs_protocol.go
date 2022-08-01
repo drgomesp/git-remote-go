@@ -319,7 +319,7 @@ func (p *IpfsProtocol) Push(local string, remote string) (string, error) {
 	}
 
 	if head == "" {
-		headRef, err := p.ipfs.Add(strings.NewReader("refs/heads/master"))
+		headRef, err := p.ipfs.Add(strings.NewReader("refs/heads/main"))
 		if err != nil {
 			return "", fmt.Errorf("push: %v", err)
 		}
